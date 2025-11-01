@@ -53,13 +53,13 @@ class GameScreen(camera: OrthographicCamera, batch: SpriteBatch) : BaseScreen(ca
     override fun show() {
         super.show()
         backToMenu = false
-        initializeGame()
+        initializeGame(resetLives = true)
     }
     
-    private fun initializeGame() {
+    private fun initializeGame(resetLives: Boolean = false) {
         currentLevel = DataManager.getCurrentLevel()
         score = 0
-        lives = Constants.MAX_LIVES
+        if (resetLives) lives = Constants.MAX_LIVES
         timeElapsed = 0f
         gameover = false
         levelComplete = false

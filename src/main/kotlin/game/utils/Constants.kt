@@ -18,9 +18,9 @@ object Constants {
     const val ENEMY_SPEED = 150f
     
     // Física
-    const val TANK_HEALTH = 80
+    const val TANK_HEALTH = 60  // Antes era 80
     const val BULLET_DAMAGE = 40
-    const val ENEMY_DAMAGE = 15
+    const val ENEMY_DAMAGE = 20  // Antes era 15
     const val OBSTACLE_HEALTH = 20  // Antes era 50
     
     // UI Colors (RGB normalized 0-1)

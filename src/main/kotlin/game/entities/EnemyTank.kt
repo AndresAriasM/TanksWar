@@ -35,31 +35,32 @@ class EnemyTank(
         shapeRenderer.end()
     }
     
+    private var targetX = 0f
+    private var targetY = 0f
+    private var moveTimer = 0f
+    
     private fun updateAI() {
-        val isNearWall = x < 60f || x > Constants.SCREEN_WIDTH - 60f || 
-                         y < 60f || y > Constants.SCREEN_HEIGHT - 60f
+        moveTimer += 0.016f
         
-        if (isNearWall) {
-            angle += Random.nextInt(90, 180).toFloat()
+        // Cambiar objetivo cada 3-7 segundos
+        if (moveTimer > (3f + Random.nextFloat() * 4f)) {
+            targetX = Random.nextFloat() * Constants.SCREEN_WIDTH
+            targetY = Random.nextFloat() * Constants.SCREEN_HEIGHT
+            moveTimer = 0f
         }
         
-        when (enemyType) {
-            EnemyType.NORMAL -> {
-                rotate(3f)
-                if (Random.nextFloat() > 0.97f) angle += Random.nextInt(-60, 60)
-            }
-            EnemyType.FAST -> {
-                rotate(8f)
-                if (Random.nextFloat() > 0.95f) angle += Random.nextInt(-45, 45)
-            }
-            EnemyType.TANK -> {
-                rotate(2f)
-                if (Random.nextFloat() > 0.98f) angle += Random.nextInt(-30, 30)
-            }
-            EnemyType.SMART -> {
-                rotate(4f)
-                if (Random.nextFloat() > 0.96f) angle += Random.nextInt(-50, 50)
-            }
+        // Moverse hacia objetivo
+        val dx = targetX - x
+        val dy = targetY - y
+        val distance = kotlin.math.sqrt((dx * dx + dy * dy).toDouble()).toFloat()
+        
+        if (distance > 20f) {
+            angle = Math.toDegrees(kotlin.math.atan2(dy.toDouble(), dx.toDouble())).toFloat()
+        }
+        
+        // Cambio aleatorio ocasional
+        if (Random.nextFloat() > 0.98f) {
+            angle += Random.nextInt(-30, 30)
         }
     }
     
@@ -76,7 +77,7 @@ class EnemyTank(
                 x = bulletX,
                 y = bulletY,
                 angle = angle,
-                damage = (Constants.BULLET_DAMAGE / 2).toInt(),
+                damage = Constants.ENEMY_DAMAGE,
                 isPlayerBullet = false
             )
         }
