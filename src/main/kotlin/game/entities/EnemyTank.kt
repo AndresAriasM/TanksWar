@@ -9,124 +9,62 @@ import kotlin.math.sin
 import kotlin.random.Random
 
 class EnemyTank(
-    x: Float,
-    y: Float,
+    x: Float = 100f,
+    y: Float = 100f,
     val enemyType: EnemyType = EnemyType.NORMAL
 ) : Tank(x, y) {
-    
-    private var aiTimer: Float = 0f
-    private var directionChangeInterval: Float = 2f
-    private var targetX: Float = x
-    private var targetY: Float = y
-    private var lastAngle: Float = 90f
-    private var scoreValue: Int = 100
-    
-    init {
-        configureByType()
+    private val scoreValue = when (enemyType) {
+        EnemyType.NORMAL -> 100
+        EnemyType.FAST -> 150
+        EnemyType.TANK -> 200
+        EnemyType.SMART -> 300
     }
     
-    private fun configureByType() {
-        when (enemyType) {
-            EnemyType.NORMAL -> {
-                speed = Constants.ENEMY_SPEED
-                maxHealth = 50
-                health = 50
-                shootCooldown = 1.5f
-                scoreValue = 100
-            }
-            EnemyType.FAST -> {
-                speed = Constants.ENEMY_SPEED * 1.5f
-                maxHealth = 30
-                health = 30
-                shootCooldown = 1f
-                scoreValue = 150
-            }
-            EnemyType.TANK -> {
-                speed = Constants.ENEMY_SPEED * 0.6f
-                maxHealth = 100
-                health = 100
-                shootCooldown = 2f
-                scoreValue = 200
-            }
-            EnemyType.SMART -> {
-                speed = Constants.ENEMY_SPEED * 1.2f
-                maxHealth = 60
-                health = 60
-                shootCooldown = 1.2f
-                scoreValue = 250
-            }
-        }
-    }
+    private var aiTimer = 0f
     
     override fun update(deltaTime: Float) {
-        if (!isAlive) return
-        
         aiTimer += deltaTime
-        updateShootCooldown(deltaTime)
-        
-        // Cambiar dirección cada cierto tiempo
-        if (aiTimer >= directionChangeInterval) {
-            updateAI()
-            aiTimer = 0f
-        }
-        
-        // Moverse en la dirección actual
+        updateAI()
         moveForward(deltaTime)
+        updateShootCooldown(deltaTime)
     }
     
     override fun render(batch: SpriteBatch, shapeRenderer: ShapeRenderer) {
         shapeRenderer.begin(ShapeRenderer.ShapeType.Filled)
-        
-        // Color según tipo
-        val (r, g, b) = when (enemyType) {
-            EnemyType.NORMAL -> Triple(1f, 1f, 0f)      // Amarillo
-            EnemyType.FAST -> Triple(1f, 0.5f, 0f)      // Naranja
-            EnemyType.TANK -> Triple(0.5f, 0f, 1f)      // Púrpura
-            EnemyType.SMART -> Triple(1f, 0f, 1f)       // Magenta
-        }
-        
-        drawTank(shapeRenderer, r, g, b)
+        drawTank(shapeRenderer, 1f, 0f, 0f)
         shapeRenderer.end()
     }
     
     private fun updateAI() {
-        // Evitar bordes - cambiar dirección si toca los límites
-        if (x < 50f || x > Constants.SCREEN_WIDTH - 50f) {
-            angle = if (x < 50f) 0f else 180f
-        }
-        if (y < 50f || y > Constants.SCREEN_HEIGHT - 50f) {
-            angle = if (y < 50f) 270f else 90f
+        val isNearWall = x < 60f || x > Constants.SCREEN_WIDTH - 60f || 
+                         y < 60f || y > Constants.SCREEN_HEIGHT - 60f
+        
+        if (isNearWall) {
+            angle += Random.nextInt(90, 180).toFloat()
         }
         
-        // Rotación según tipo
         when (enemyType) {
             EnemyType.NORMAL -> {
                 rotate(3f)
+                if (Random.nextFloat() > 0.97f) angle += Random.nextInt(-60, 60)
             }
             EnemyType.FAST -> {
                 rotate(8f)
+                if (Random.nextFloat() > 0.95f) angle += Random.nextInt(-45, 45)
             }
             EnemyType.TANK -> {
                 rotate(2f)
+                if (Random.nextFloat() > 0.98f) angle += Random.nextInt(-30, 30)
             }
             EnemyType.SMART -> {
                 rotate(4f)
+                if (Random.nextFloat() > 0.96f) angle += Random.nextInt(-50, 50)
             }
         }
-        
-        // Cambiar dirección aleatoriamente para no quedarse pegado
-        if (Random.nextFloat() > 0.95f) {
-            angle += Random.nextInt(-45, 45)
-        }
-    }
-    
-    companion object {
-        var gamePlayerX = 0f
-        var gamePlayerY = 0f
     }
     
     fun shoot(): Bullet? {
-        if (canShoot() && Random.nextFloat() < 0.3f) { // 30% de probabilidad
+        if (canShoot() && Random.nextFloat() < 0.3f) {
             resetShootCooldown()
             
             val radians = Math.toRadians(angle.toDouble())

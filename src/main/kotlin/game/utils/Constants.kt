@@ -14,13 +14,14 @@ object Constants {
     // Velocidades
     const val TANK_SPEED = 200f
     const val TANK_ROTATION_SPEED = 180f
-    const val BULLET_SPEED = 400f
+    const val BULLET_SPEED = 600f  // Antes era 400f
     const val ENEMY_SPEED = 150f
     
     // Física
     const val TANK_HEALTH = 80
     const val BULLET_DAMAGE = 40
     const val ENEMY_DAMAGE = 15
+    const val OBSTACLE_HEALTH = 20  // Antes era 50
     
     // UI Colors (RGB normalized 0-1)
     const val COLOR_PRIMARY_R = 0.2f

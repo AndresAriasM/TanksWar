@@ -34,10 +34,14 @@ class GameScreen(camera: OrthographicCamera, batch: SpriteBatch) : BaseScreen(ca
     private var levelComplete = false
     private var backToMenu = false
     
+    private var lastLivesCount = Constants.MAX_LIVES
+    private var livesLostMessage = ""
+    private var livesLostTimer = 0f
+    
     private var powerUpSpawnTimer = 0f
-    private val powerUpSpawnInterval = 15f // Cada 15 segundos
+    private val powerUpSpawnInterval = 15f
     private var airplaneSpawnTimer = 0f
-    private val airplaneSpawnInterval = 20f // Cada 20 segundos
+    private val airplaneSpawnInterval = 20f
     
     data class DamageIndicator(
         var x: Float,
@@ -87,6 +91,8 @@ class GameScreen(camera: OrthographicCamera, batch: SpriteBatch) : BaseScreen(ca
         powerUps.clear()
         airplanes.clear()
         damageIndicators.clear()
+        powerUpSpawnTimer = 0f
+        airplaneSpawnTimer = 0f
         val powerupCount = 3 + (currentLevel / 2)
         val allPowerupTypes = listOf(
             PowerUpType.RAPID_FIRE,
@@ -207,8 +213,8 @@ class GameScreen(camera: OrthographicCamera, batch: SpriteBatch) : BaseScreen(ca
         }
         airplanes.removeAll { !it.isActive }
         
-        enemyManager.getEnemies().forEach { enemy ->
-            if (enemy.isAlive && Random.nextFloat() < 0.01f) {
+        for (enemy in enemyManager.getEnemies()) {
+            if (enemy.isAlive && Random.nextFloat() < 0.025f + (currentLevel * 0.005f)) {
                 enemy.shoot()?.let { bullets.add(it) }
             }
         }
@@ -222,6 +228,11 @@ class GameScreen(camera: OrthographicCamera, batch: SpriteBatch) : BaseScreen(ca
         // Actualizar indicadores de daño
         damageIndicators.forEach { it.time -= deltaTime }
         damageIndicators.removeAll { it.time <= 0 }
+        
+        // Actualizar mensaje de vidas perdidas
+        if (livesLostTimer > 0) {
+            livesLostTimer -= deltaTime
+        }
         
         checkBulletTankCollisions()
         checkBulletObstacleCollisions()
@@ -257,6 +268,11 @@ class GameScreen(camera: OrthographicCamera, batch: SpriteBatch) : BaseScreen(ca
         
         if (!playerTank.isAlive) {
             lives--
+            if (lives > 0) {
+                livesLostMessage = "¡PERDISTE UNA VIDA! Vidas restantes: $lives"
+                livesLostTimer = 2f
+                println("💀 ¡Perdiste una vida! Te quedan $lives")
+            }
             if (lives <= 0) {
                 gameState = GameState.GAME_OVER
                 gameover = true
@@ -271,7 +287,7 @@ class GameScreen(camera: OrthographicCamera, batch: SpriteBatch) : BaseScreen(ca
             var hit = false
             
             if (bullet.isPlayerBullet) {
-                enemyManager.getEnemies().forEach { enemy ->
+                for (enemy in enemyManager.getEnemies()) {
                     if (enemy.isAlive &&
                         CollisionSystem.checkCircleCollision(
                             bullet.x, bullet.y, Constants.BULLET_SIZE / 2,
@@ -365,7 +381,7 @@ class GameScreen(camera: OrthographicCamera, batch: SpriteBatch) : BaseScreen(ca
     
     private fun checkTankCollisions() {
         // Colisiones entre tanques enemigos y jugador
-        enemyManager.getEnemies().forEach { enemy ->
+        for (enemy in enemyManager.getEnemies()) {
             if (enemy.isAlive && playerTank.isAlive) {
                 val dx = playerTank.x - enemy.x
                 val dy = playerTank.y - enemy.y
@@ -416,7 +432,7 @@ class GameScreen(camera: OrthographicCamera, batch: SpriteBatch) : BaseScreen(ca
                           allyTank!!.health, allyTank!!.maxHealth, 30f, 5f)
         }
         
-        enemyManager.getEnemies().forEach { enemy ->
+        for (enemy in enemyManager.getEnemies()) {
             if (enemy.isAlive) {
                 enemy.render(batch, shapeRenderer)
                 // Dibujar barra de vida encima del tanque
@@ -463,6 +479,18 @@ class GameScreen(camera: OrthographicCamera, batch: SpriteBatch) : BaseScreen(ca
         font.draw(batch, "Tiempo: ${minutes}:${String.format("%02d", seconds)}", Constants.SCREEN_WIDTH - 150f, Constants.SCREEN_HEIGHT - 50f)
         
         font.draw(batch, "Enemigos: ${enemyManager.getAliveEnemiesCount()}", Constants.SCREEN_WIDTH / 2 - 100f, Constants.SCREEN_HEIGHT - 20f)
+        
+        // Mostrar mensaje de vidas perdidas
+        if (livesLostTimer > 0) {
+            font.color.set(1f, 0f, 0f, livesLostTimer / 2f)
+            font.data.setScale(2f)
+            val layout = com.badlogic.gdx.graphics.g2d.GlyphLayout(font, livesLostMessage)
+            font.draw(batch, livesLostMessage, 
+                      Constants.SCREEN_WIDTH / 2 - layout.width / 2, 
+                      Constants.SCREEN_HEIGHT / 2 + 100f)
+            font.data.setScale(1f)
+            font.color.set(0.2f, 0.8f, 0.2f, 1f)
+        }
         
         batch.end()
     }
