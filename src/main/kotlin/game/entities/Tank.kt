@@ -120,4 +120,26 @@ abstract class Tank(
     }
     
     fun getHealthPercentage(): Float = (health.toFloat() / maxHealth) * 100f
+    
+    fun drawHealthBar(shapeRenderer: ShapeRenderer) {
+        val barWidth = 40f
+        val barHeight = 4f
+        val barX = x - barWidth / 2
+        val barY = y + size / 2 + 8f
+        
+        // NO hacer begin aquí - ya está en progreso
+        
+        // Fondo rojo
+        shapeRenderer.color.set(1f, 0f, 0f, 1f)
+        shapeRenderer.rect(barX, barY, barWidth, barHeight)
+        
+        // Barra verde según salud
+        shapeRenderer.color.set(0f, 1f, 0f, 1f)
+        val healthWidth = (barWidth * health.toFloat()) / maxHealth.toFloat()
+        shapeRenderer.rect(barX, barY, healthWidth, barHeight)
+        
+        // Borde
+        shapeRenderer.color.set(1f, 1f, 1f, 0.8f)
+        shapeRenderer.rect(barX - 1, barY - 1, barWidth + 2, barHeight + 2)
+    }
 }

@@ -18,9 +18,6 @@ class PlayerTank(x: Float = 100f, y: Float = 100f) : Tank(x, y) {
         shapeRenderer.begin(ShapeRenderer.ShapeType.Filled)
         drawTank(shapeRenderer, 0.2f, 0.8f, 0.2f) // Verde para el jugador
         shapeRenderer.end()
-        
-        // Dibujar barra de salud
-        drawHealthBar(shapeRenderer)
     }
     
     private fun handleInput() {
@@ -63,22 +60,5 @@ class PlayerTank(x: Float = 100f, y: Float = 100f) : Tank(x, y) {
             )
         }
         return null
-    }
-    
-    private fun drawHealthBar(shapeRenderer: ShapeRenderer) {
-        val barWidth = size
-        val barHeight = 4f
-        val barX = x - barWidth / 2
-        val barY = y + size / 2 + 10f
-        
-        // Fondo rojo
-        shapeRenderer.begin(ShapeRenderer.ShapeType.Filled)
-        shapeRenderer.color.set(1f, 0f, 0f, 1f)
-        shapeRenderer.rect(barX, barY, barWidth, barHeight)
-        
-        // Salud verde
-        shapeRenderer.color.set(0f, 1f, 0f, 1f)
-        shapeRenderer.rect(barX, barY, barWidth * (health.toFloat() / maxHealth), barHeight)
-        shapeRenderer.end()
     }
 }

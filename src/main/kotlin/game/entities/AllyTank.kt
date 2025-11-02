@@ -9,8 +9,8 @@ import kotlin.math.sin
 import kotlin.random.Random
 
 class AllyTank(x: Float = 100f, y: Float = 100f) : Tank(x, y) {
-    var targetX = 0f
-    var targetY = 0f
+    var targetX = x
+    var targetY = y
     private var moveTimer = 0f
     private var shootTimer = 0f
     
@@ -57,7 +57,7 @@ class AllyTank(x: Float = 100f, y: Float = 100f) : Tank(x, y) {
                 x = bulletX,
                 y = bulletY,
                 angle = angle,
-                damage = (Constants.BULLET_DAMAGE / 2).toInt(),
+                damage = Constants.BULLET_DAMAGE,
                 isPlayerBullet = true
             )
         }

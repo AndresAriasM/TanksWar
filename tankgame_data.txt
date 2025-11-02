@@ -1,1 +1,1 @@
-Player|200|200|5|5|3|true|powerups_collected:119,enemies_killed:167
+Player|3200|150|5|5|3|true|powerups_collected:228,enemies_killed:253

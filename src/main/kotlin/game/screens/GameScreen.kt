@@ -16,7 +16,7 @@ class GameScreen(camera: OrthographicCamera, batch: SpriteBatch) : BaseScreen(ca
     override val screenType = ScreenType.GAME
     
     private lateinit var playerTank: PlayerTank
-    private var allyTank: AllyTank? = null
+    private val allyTanks = mutableListOf<AllyTank>()
     private var allySpawned = false
     private lateinit var enemyManager: EnemyManager
     private lateinit var mapManager: MapManager
@@ -93,6 +93,7 @@ class GameScreen(camera: OrthographicCamera, batch: SpriteBatch) : BaseScreen(ca
         powerUps.clear()
         airplanes.clear()
         damageIndicators.clear()
+        allyTanks.clear()
         powerUpSpawnTimer = 0f
         airplaneSpawnTimer = 0f
         val powerupCount = 3 + (currentLevel / 2)
@@ -157,10 +158,10 @@ class GameScreen(camera: OrthographicCamera, batch: SpriteBatch) : BaseScreen(ca
         
         // Spawnar aliado aleatorio en el nivel
         if (!allySpawned && Random.nextFloat() > 0.8f) {
-            allyTank = AllyTank(
+            allyTanks.add(AllyTank(
                 x = Random.nextFloat() * (Constants.SCREEN_WIDTH - 100f) + 50f,
                 y = Random.nextFloat() * (Constants.SCREEN_HEIGHT - 100f) + 50f
-            )
+            ))
             allySpawned = true
             println("🛡️ ¡Aliado ha llegado!")
         }
@@ -180,11 +181,14 @@ class GameScreen(camera: OrthographicCamera, batch: SpriteBatch) : BaseScreen(ca
         playerTank.update(deltaTime)
         enemyManager.update(deltaTime)
         
-        // Actualizar aliado
-        if (allyTank != null && allyTank!!.isAlive) {
-            allyTank!!.update(deltaTime)
-            allyTank!!.shoot()?.let { bullets.add(it) }
+        // Actualizar aliados
+        for (ally in allyTanks) {
+            if (ally.isAlive) {
+                ally.update(deltaTime)
+                ally.shoot()?.let { bullets.add(it) }
+            }
         }
+        allyTanks.removeAll { !it.isAlive }
         
         // Actualizar y procesar aviones
         airplanes.forEach { plane ->
@@ -319,15 +323,17 @@ class GameScreen(camera: OrthographicCamera, batch: SpriteBatch) : BaseScreen(ca
                     hit = true
                 }
                 
-                // Balas enemigas dañan al aliado
-                if (allyTank != null && allyTank!!.isAlive &&
-                    CollisionSystem.checkCircleCollision(
-                        bullet.x, bullet.y, Constants.BULLET_SIZE / 2,
-                        allyTank!!.x, allyTank!!.y, Constants.TANK_SIZE / 2
-                    )) {
-                    allyTank!!.takeDamage(bullet.damage)
-                    damageIndicators.add(DamageIndicator(allyTank!!.x, allyTank!!.y, bullet.damage))
-                    hit = true
+                // Balas enemigas dañan a los aliados
+                for (ally in allyTanks) {
+                    if (ally.isAlive &&
+                        CollisionSystem.checkCircleCollision(
+                            bullet.x, bullet.y, Constants.BULLET_SIZE / 2,
+                            ally.x, ally.y, Constants.TANK_SIZE / 2
+                        )) {
+                        ally.takeDamage(bullet.damage)
+                        damageIndicators.add(DamageIndicator(ally.x, ally.y, bullet.damage))
+                        hit = true
+                    }
                 }
             }
             
@@ -420,13 +426,13 @@ class GameScreen(camera: OrthographicCamera, batch: SpriteBatch) : BaseScreen(ca
                 SoundManager.playSound(SoundManager.SoundType.SHOOT)
             }
             PowerUpType.ALLY_SPAWN -> {
-                // Generar nuevo aliado con poca vida
-                allyTank = AllyTank(
+                // Agregar nuevo aliado con poca vida
+                allyTanks.add(AllyTank(
                     x = playerTank.x + 50f,
                     y = playerTank.y + 50f
-                )
-                allyTank!!.health = 30  // Poca vida
-                allySpawned = true
+                ))
+                allyTanks.last().health = 30
+                println("🛡️ ¡Nuevo aliado spawneado! Total: ${allyTanks.size}")
                 println("🛡️ ¡Nuevo aliado ha sido invocado!")
             }
         }
@@ -451,21 +457,66 @@ class GameScreen(camera: OrthographicCamera, batch: SpriteBatch) : BaseScreen(ca
             playerTank.render(batch, shapeRenderer)
         }
         
-        // Renderizar aliado
-        if (allyTank != null && allyTank!!.isAlive) {
-            allyTank!!.render(batch, shapeRenderer)
-            drawHealthBar(allyTank!!.x, allyTank!!.y + Constants.TANK_SIZE / 2 + 10f, 
-                          allyTank!!.health, allyTank!!.maxHealth, 30f, 5f)
+        // Renderizar aliados
+        for (ally in allyTanks) {
+            if (ally.isAlive) {
+                ally.render(batch, shapeRenderer)
+            }
         }
         
         for (enemy in enemyManager.getEnemies()) {
             if (enemy.isAlive) {
                 enemy.render(batch, shapeRenderer)
-                // Dibujar barra de vida encima del tanque
-                drawHealthBar(enemy.x, enemy.y + Constants.TANK_SIZE / 2 + 10f, 
-                              enemy.health, enemy.maxHealth, 30f, 5f)
             }
         }
+        
+        // Dibujar barras de vida después de todos los tanques
+        shapeRenderer.begin(ShapeRenderer.ShapeType.Filled)
+        
+        // Barra de vida del jugador
+        if (playerTank.isAlive) {
+            val barWidth = 40f
+            val barHeight = 4f
+            val barX = playerTank.x - barWidth / 2
+            val barY = playerTank.y + Constants.TANK_SIZE / 2 + 8f
+            
+            shapeRenderer.color.set(1f, 0f, 0f, 1f)
+            shapeRenderer.rect(barX, barY, barWidth, barHeight)
+            shapeRenderer.color.set(0f, 1f, 0f, 1f)
+            shapeRenderer.rect(barX, barY, (barWidth * playerTank.health) / playerTank.maxHealth, barHeight)
+        }
+        
+        // Barras de aliados
+        for (ally in allyTanks) {
+            if (ally.isAlive) {
+                val barWidth = 40f
+                val barHeight = 4f
+                val barX = ally.x - barWidth / 2
+                val barY = ally.y + Constants.TANK_SIZE / 2 + 8f
+                
+                shapeRenderer.color.set(1f, 0f, 0f, 1f)
+                shapeRenderer.rect(barX, barY, barWidth, barHeight)
+                shapeRenderer.color.set(0f, 1f, 0f, 1f)
+                shapeRenderer.rect(barX, barY, (barWidth * ally.health) / ally.maxHealth, barHeight)
+            }
+        }
+        
+        // Barras de enemigos
+        for (enemy in enemyManager.getEnemies()) {
+            if (enemy.isAlive) {
+                val barWidth = 40f
+                val barHeight = 4f
+                val barX = enemy.x - barWidth / 2
+                val barY = enemy.y + Constants.TANK_SIZE / 2 + 8f
+                
+                shapeRenderer.color.set(1f, 0f, 0f, 1f)
+                shapeRenderer.rect(barX, barY, barWidth, barHeight)
+                shapeRenderer.color.set(0f, 1f, 0f, 1f)
+                shapeRenderer.rect(barX, barY, (barWidth * enemy.health) / enemy.maxHealth, barHeight)
+            }
+        }
+        
+        shapeRenderer.end()
         
         bullets.forEach { bullet ->
             bullet.render(batch, shapeRenderer)
@@ -633,5 +684,6 @@ class GameScreen(camera: OrthographicCamera, batch: SpriteBatch) : BaseScreen(ca
         powerUps.clear()
         damageIndicators.clear()
         airplanes.clear()
+        allyTanks.clear()
     }
 }
