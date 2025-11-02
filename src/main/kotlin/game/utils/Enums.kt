@@ -13,18 +13,20 @@ enum class Direction(val angle: Float) {
 }
 
 enum class EnemyType {
-    NORMAL,      // Velocidad normal, IA básica
-    FAST,        // Rápido pero frágil
-    TANK,        // Lento pero fuerte
-    SMART        // IA mejorada
+    NORMAL,
+    FAST,
+    TANK,
+    SMART
 }
 
 enum class PowerUpType {
-    RAPID_FIRE,  // Dispara más rápido
-    SHIELD,      // Escudo temporal
-    SPEED,       // Movimiento más rápido
-    HEALTH,      // Recupera vidas
-    ARMOR        // Resistencia aumentada
+    RAPID_FIRE,
+    SHIELD,
+    SPEED,
+    HEALTH,
+    ARMOR,
+    BLAST,
+    ALLY_SPAWN
 }
 
 enum class GameState {

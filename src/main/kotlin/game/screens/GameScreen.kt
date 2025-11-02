@@ -8,6 +8,8 @@ import com.badlogic.gdx.graphics.glutils.ShapeRenderer
 import game.entities.*
 import game.managers.*
 import game.utils.*
+import kotlin.math.cos
+import kotlin.math.sin
 import kotlin.random.Random
 
 class GameScreen(camera: OrthographicCamera, batch: SpriteBatch) : BaseScreen(camera, batch) {
@@ -99,7 +101,9 @@ class GameScreen(camera: OrthographicCamera, batch: SpriteBatch) : BaseScreen(ca
             PowerUpType.SHIELD,
             PowerUpType.SPEED,
             PowerUpType.HEALTH,
-            PowerUpType.ARMOR
+            PowerUpType.ARMOR,
+            PowerUpType.BLAST,
+            PowerUpType.ALLY_SPAWN
         )
         
         repeat(powerupCount) {
@@ -166,7 +170,7 @@ class GameScreen(camera: OrthographicCamera, batch: SpriteBatch) : BaseScreen(ca
             val y = Random.nextFloat() * (Constants.SCREEN_HEIGHT - 100f) + 50f
             val allPowerupTypes = listOf(
                 PowerUpType.RAPID_FIRE, PowerUpType.SHIELD, PowerUpType.SPEED,
-                PowerUpType.HEALTH, PowerUpType.ARMOR
+                PowerUpType.HEALTH, PowerUpType.ARMOR, PowerUpType.BLAST, PowerUpType.ALLY_SPAWN
             )
             val type = allPowerupTypes[Random.nextInt(allPowerupTypes.size)]
             powerUps.add(PowerUp(x, y, type))
@@ -388,9 +392,9 @@ class GameScreen(camera: OrthographicCamera, batch: SpriteBatch) : BaseScreen(ca
                 val distance = kotlin.math.sqrt((dx * dx + dy * dy).toDouble()).toFloat()
                 
                 if (distance < Constants.TANK_SIZE) {
-                    playerTank.takeDamage(5)
-                    enemy.takeDamage(5)
-                    damageIndicators.add(DamageIndicator(playerTank.x, playerTank.y, 5))
+                    playerTank.takeDamage(20)
+                    enemy.takeDamage(20)
+                    damageIndicators.add(DamageIndicator(playerTank.x, playerTank.y, 20))
                 }
             }
         }
@@ -403,6 +407,28 @@ class GameScreen(camera: OrthographicCamera, batch: SpriteBatch) : BaseScreen(ca
             PowerUpType.SPEED -> playerTank.speedMultiplier = 1.5f
             PowerUpType.HEALTH -> playerTank.heal(30)
             PowerUpType.ARMOR -> playerTank.damageMultiplier = 1.5f
+            PowerUpType.BLAST -> {
+                // Disparo en 5 direcciones
+                val angles = listOf(0f, 72f, 144f, 216f, 288f)
+                angles.forEach { angle ->
+                    val radians = Math.toRadians(angle.toDouble())
+                    val cannonLength = Constants.TANK_SIZE * 0.8f
+                    val bulletX = playerTank.x + (cos(radians) * cannonLength).toFloat()
+                    val bulletY = playerTank.y + (sin(radians) * cannonLength).toFloat()
+                    bullets.add(Bullet(bulletX, bulletY, angle, Constants.BULLET_DAMAGE, true))
+                }
+                SoundManager.playSound(SoundManager.SoundType.SHOOT)
+            }
+            PowerUpType.ALLY_SPAWN -> {
+                // Generar nuevo aliado con poca vida
+                allyTank = AllyTank(
+                    x = playerTank.x + 50f,
+                    y = playerTank.y + 50f
+                )
+                allyTank!!.health = 30  // Poca vida
+                allySpawned = true
+                println("🛡️ ¡Nuevo aliado ha sido invocado!")
+            }
         }
     }
     

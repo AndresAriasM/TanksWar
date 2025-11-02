@@ -32,6 +32,8 @@ class PowerUp(
             PowerUpType.SPEED -> Triple(0f, 1f, 0.5f)
             PowerUpType.HEALTH -> Triple(1f, 0f, 0f)
             PowerUpType.ARMOR -> Triple(0.5f, 0.5f, 0.5f)
+            PowerUpType.BLAST -> Triple(1f, 0.5f, 0f)
+            PowerUpType.ALLY_SPAWN -> Triple(0.5f, 1f, 0f)
         }
         
         // Núcleo brillante
@@ -61,5 +63,7 @@ class PowerUp(
         PowerUpType.SPEED -> "Velocidad"
         PowerUpType.HEALTH -> "Salud"
         PowerUpType.ARMOR -> "Armadura"
+        PowerUpType.BLAST -> "Ráfaga de 5 tiros"
+        PowerUpType.ALLY_SPAWN -> "Tanque Aliado"
     }
 }

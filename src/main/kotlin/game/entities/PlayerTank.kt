@@ -4,6 +4,7 @@ import com.badlogic.gdx.Gdx
 import com.badlogic.gdx.Input
 import com.badlogic.gdx.graphics.g2d.SpriteBatch
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer
+import game.utils.Constants
 
 class PlayerTank(x: Float = 100f, y: Float = 100f) : Tank(x, y) {
     var bulletsFired: Int = 0
@@ -57,7 +58,7 @@ class PlayerTank(x: Float = 100f, y: Float = 100f) : Tank(x, y) {
                 x = bulletX,
                 y = bulletY,
                 angle = angle,
-                damage = (5 * damageMultiplier).toInt(),
+                damage = (Constants.BULLET_DAMAGE * damageMultiplier).toInt(),
                 isPlayerBullet = true
             )
         }
