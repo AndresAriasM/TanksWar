@@ -28,6 +28,8 @@ object SoundManager {
         SHOOT,
         EXPLOSION,
         POWERUP,
+        COLLISION,
+        SHOOT_ENEMY,
         LEVEL_COMPLETE,
         GAME_OVER,
         UI_CLICK,
@@ -90,8 +92,82 @@ object SoundManager {
     }
     
     private fun cargarEfectos() {
-        // Los efectos de sonido no son críticos
-        println("✅ Sistema de sonido listo")
+        try {
+            println("   Buscando archivos de efectos...")
+            
+            // Cargar shoot sound
+            shootSound = try {
+                val archivo = File("src/resources/assets/sounds/shoot.wav")
+                if (archivo.exists()) {
+                    println("   ✓ Encontrado: shoot.wav")
+                    Gdx.audio.newSound(Gdx.files.absolute(archivo.absolutePath))
+                } else {
+                    null
+                }
+            } catch (e: Exception) {
+                null
+            }
+            
+            // Cargar explosion sound
+            explosionSound = try {
+                val archivo = File("src/resources/assets/sounds/explosion.wav")
+                if (archivo.exists()) {
+                    println("   ✓ Encontrado: explosion.wav")
+                    Gdx.audio.newSound(Gdx.files.absolute(archivo.absolutePath))
+                } else {
+                    null
+                }
+            } catch (e: Exception) {
+                null
+            }
+            
+            // Cargar powerup sound
+            powerupSound = try {
+                val archivo = File("src/resources/assets/sounds/powerup.wav")
+                if (archivo.exists()) {
+                    println("   ✓ Encontrado: powerup.wav")
+                    Gdx.audio.newSound(Gdx.files.absolute(archivo.absolutePath))
+                } else {
+                    null
+                }
+            } catch (e: Exception) {
+                null
+            }
+            
+            // Cargar collision sound
+            damageSound = try {
+                val archivo = File("src/resources/assets/sounds/colision.wav")
+                if (archivo.exists()) {
+                    println("   ✓ Encontrado: colision.wav")
+                    Gdx.audio.newSound(Gdx.files.absolute(archivo.absolutePath))
+                } else {
+                    null
+                }
+            } catch (e: Exception) {
+                null
+            }
+            
+            // Cargar enemy shoot sound
+            uiClickSound = try {
+                val archivo = File("src/resources/assets/sounds/shoot_enemy.wav")
+                if (archivo.exists()) {
+                    println("   ✓ Encontrado: shoot_enemy.wav")
+                    Gdx.audio.newSound(Gdx.files.absolute(archivo.absolutePath))
+                } else {
+                    null
+                }
+            } catch (e: Exception) {
+                null
+            }
+            
+            val loadedCount = listOf(shootSound, explosionSound, powerupSound, damageSound, uiClickSound).count { it != null }
+            if (loadedCount > 0) {
+                println("✅ Efectos de sonido: $loadedCount/5 cargados")
+            }
+            
+        } catch (e: Exception) {
+            println("⚠️ Error cargando efectos: ${e.message}")
+        }
     }
     
     fun playSound(soundType: SoundType) {
@@ -101,6 +177,8 @@ object SoundManager {
                 SoundType.SHOOT -> shootSound?.play(soundVolume)
                 SoundType.EXPLOSION -> explosionSound?.play(soundVolume)
                 SoundType.POWERUP -> powerupSound?.play(soundVolume * 0.8f)
+                SoundType.COLLISION -> damageSound?.play(soundVolume * 0.7f)
+                SoundType.SHOOT_ENEMY -> uiClickSound?.play(soundVolume)
                 SoundType.LEVEL_COMPLETE -> levelCompleteSound?.play(soundVolume * 0.9f)
                 SoundType.GAME_OVER -> gameOverSound?.play(soundVolume)
                 SoundType.UI_CLICK -> uiClickSound?.play(soundVolume * 0.5f)

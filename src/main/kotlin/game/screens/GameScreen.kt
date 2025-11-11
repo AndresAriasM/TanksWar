@@ -264,6 +264,7 @@ class GameScreen(camera: OrthographicCamera, batch: SpriteBatch) : BaseScreen(ca
         for (enemy in enemyManager.getEnemies()) {
             if (enemy.isAlive && Random.nextFloat() < 0.025f + (currentLevel * 0.005f)) {
                 enemy.shoot()?.let { bullets.add(it) }
+                SoundManager.playSound(SoundManager.SoundType.UI_CLICK)
             }
         }
         
@@ -437,6 +438,7 @@ class GameScreen(camera: OrthographicCamera, batch: SpriteBatch) : BaseScreen(ca
                     playerTank.takeDamage(20)
                     enemy.takeDamage(20)
                     damageIndicators.add(DamageIndicator(playerTank.x, playerTank.y, 20))
+                    SoundManager.playSound(SoundManager.SoundType.DAMAGE)  
                 }
             }
         }
