@@ -58,6 +58,7 @@ class GameScreen(camera: OrthographicCamera, batch: SpriteBatch) : BaseScreen(ca
     
     override fun show() {
         super.show()
+        SoundManager.playGameMusic()
         backToMenu = false
         initializeGame(resetLives = true)
     }

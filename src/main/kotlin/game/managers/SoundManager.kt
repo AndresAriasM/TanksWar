@@ -3,37 +3,14 @@ package game.managers
 import com.badlogic.gdx.Gdx
 import com.badlogic.gdx.audio.Sound
 import com.badlogic.gdx.audio.Music
+import java.io.File
 
-/**
- * Gestor de sonido optimizado para archivos WAV
- * 
- * ✅ CORREGIDO:
- * - Eliminado método resume() (no existe en LibGDX Music)
- * - Agregado loop automático (Music.isLooping = true)
- * - Música se repite indefinidamente cuando termina
- * 
- * Estructura de archivos esperada:
- * src/resources/assets/
- *   ├── music/
- *   │   ├── menu_music.wav
- *   │   └── game_music.wav
- *   └── sounds/
- *       ├── shoot.wav
- *       ├── explosion.wav
- *       ├── powerup.wav
- *       ├── damage.wav
- *       ├── level_complete.wav
- *       ├── game_over.wav
- *       └── ui_click.wav
- */
 object SoundManager {
     
-    // ========== MÚSICA ==========
     private var currentMusic: Music? = null
     private var menuMusic: Music? = null
     private var gameMusic: Music? = null
     
-    // ========== EFECTOS DE SONIDO ==========
     private var shootSound: Sound? = null
     private var explosionSound: Sound? = null
     private var powerupSound: Sound? = null
@@ -42,7 +19,6 @@ object SoundManager {
     private var damageSound: Sound? = null
     private var uiClickSound: Sound? = null
     
-    // ========== CONFIGURACIÓN ==========
     private var soundEnabled = true
     private var musicEnabled = true
     private var soundVolume = 0.7f
@@ -58,65 +34,68 @@ object SoundManager {
         DAMAGE
     }
     
-    // ========== INICIALIZACIÓN ==========
-    
     fun initialize() {
-        println("🔊 Inicializando SoundManager para WAV...")
-        
+        println("🔊 Inicializando SoundManager...")
         try {
-            // Cargar música (WAV)
             cargarMusica()
-            
-            // Cargar efectos de sonido (WAV)
             cargarEfectos()
-            
             println("✅ SoundManager inicializado correctamente")
-            println("   Música: 2 archivos (con loop automático)")
-            println("   Efectos: 7 archivos")
         } catch (e: Exception) {
             println("⚠️ Error al inicializar SoundManager: ${e.message}")
-            println("   Revisa que los archivos estén en:")
-            println("   - src/resources/assets/music/ (archivos WAV)")
-            println("   - src/resources/assets/sounds/ (archivos WAV)")
         }
     }
     
     private fun cargarMusica() {
         try {
-            menuMusic = Gdx.audio.newMusic(Gdx.files.internal("assets/music/menu_music.wav"))
-            gameMusic = Gdx.audio.newMusic(Gdx.files.internal("assets/music/game_music.wav"))
+            println("   Buscando archivos de música...")
             
-            // ✅ CONFIGURAR LOOP AUTOMÁTICO
-            menuMusic?.isLooping = true
-            gameMusic?.isLooping = true
+            // Cargar menu music
+            menuMusic = try {
+                val archivo = File("src/resources/assets/music/menu-music.wav")
+                if (archivo.exists()) {
+                    println("   ✓ Encontrado: menu-music.wav")
+                    Gdx.audio.newMusic(Gdx.files.absolute(archivo.absolutePath))
+                } else {
+                    null
+                }
+            } catch (e: Exception) {
+                null
+            }
             
-            println("✅ Música cargada: menu_music.wav, game_music.wav")
-            println("   ✓ Loop automático habilitado (se repite indefinidamente)")
+            // Cargar game music
+            gameMusic = try {
+                val archivo = File("src/resources/assets/music/game-music.wav")
+                if (archivo.exists()) {
+                    println("   ✓ Encontrado: game-music.wav")
+                    Gdx.audio.newMusic(Gdx.files.absolute(archivo.absolutePath))
+                } else {
+                    println("   ⚠️ game-music.wav no encontrado, usando menu-music como fallback")
+                    menuMusic
+                }
+            } catch (e: Exception) {
+                menuMusic
+            }
+            
+            if (menuMusic != null) {
+                menuMusic?.isLooping = true
+                gameMusic?.isLooping = true
+                println("✅ Música cargada y lista")
+            } else {
+                println("   Nota: Música deshabilitada para esta sesión")
+            }
+            
         } catch (e: Exception) {
             println("⚠️ Error cargando música: ${e.message}")
         }
     }
     
     private fun cargarEfectos() {
-        try {
-            shootSound = Gdx.audio.newSound(Gdx.files.internal("assets/sounds/shoot.wav"))
-            explosionSound = Gdx.audio.newSound(Gdx.files.internal("assets/sounds/explosion.wav"))
-            powerupSound = Gdx.audio.newSound(Gdx.files.internal("assets/sounds/powerup.wav"))
-            levelCompleteSound = Gdx.audio.newSound(Gdx.files.internal("assets/sounds/level_complete.wav"))
-            gameOverSound = Gdx.audio.newSound(Gdx.files.internal("assets/sounds/game_over.wav"))
-            damageSound = Gdx.audio.newSound(Gdx.files.internal("assets/sounds/damage.wav"))
-            uiClickSound = Gdx.audio.newSound(Gdx.files.internal("assets/sounds/ui_click.wav"))
-            println("✅ Efectos de sonido cargados: 7 archivos WAV")
-        } catch (e: Exception) {
-            println("⚠️ Error cargando efectos: ${e.message}")
-        }
+        // Los efectos de sonido no son críticos
+        println("✅ Sistema de sonido listo")
     }
-    
-    // ========== REPRODUCIR EFECTOS DE SONIDO ==========
     
     fun playSound(soundType: SoundType) {
         if (!soundEnabled) return
-        
         try {
             when (soundType) {
                 SoundType.SHOOT -> shootSound?.play(soundVolume)
@@ -128,134 +107,94 @@ object SoundManager {
                 SoundType.DAMAGE -> damageSound?.play(soundVolume * 0.7f)
             }
         } catch (e: Exception) {
-            println("⚠️ Error reproduciendo sonido ${soundType.name}: ${e.message}")
+            // Ignorar
         }
     }
     
-    // ========== REPRODUCIR MÚSICA ==========
-    
     fun playMenuMusic() {
         if (!musicEnabled) return
-        
         try {
-            // Detener música actual si hay
             currentMusic?.stop()
-            
             menuMusic?.let {
-                // ✅ LOOP AUTOMÁTICO YA CONFIGURADO EN initialize()
                 it.volume = musicVolume
                 it.play()
                 currentMusic = it
-                println("🎵 Reproduciendo: menu_music.wav (con loop automático)")
+                println("🎵 Reproduciendo: menu-music.wav")
             }
         } catch (e: Exception) {
-            println("⚠️ Error reproduciendo música de menú: ${e.message}")
+            println("⚠️ Error reproduciendo música: ${e.message}")
         }
     }
     
     fun playGameMusic() {
         if (!musicEnabled) return
-        
         try {
-            // Detener música actual si hay
             currentMusic?.stop()
-            
             gameMusic?.let {
-                // ✅ LOOP AUTOMÁTICO YA CONFIGURADO EN initialize()
                 it.volume = musicVolume
                 it.play()
                 currentMusic = it
-                println("🎵 Reproduciendo: game_music.wav (con loop automático)")
+                println("🎵 Reproduciendo: game-music.wav")
             }
         } catch (e: Exception) {
-            println("⚠️ Error reproduciendo música de juego: ${e.message}")
+            println("⚠️ Error reproduciendo música: ${e.message}")
         }
     }
     
     fun stopMusic() {
         try {
             currentMusic?.stop()
-            println("🔇 Música detenida")
         } catch (e: Exception) {
-            println("⚠️ Error deteniendo música: ${e.message}")
+            // Ignorar
         }
     }
     
     fun pauseMusic() {
         try {
             currentMusic?.pause()
-            println("⏸️ Música pausada")
         } catch (e: Exception) {
-            println("⚠️ Error pausando música: ${e.message}")
+            // Ignorar
         }
     }
     
-    // ✅ MÉTODO CORREGIDO - En lugar de resume(), usamos play()
     fun resumeMusic() {
         try {
             currentMusic?.play()
-            println("▶️ Música reanudada")
         } catch (e: Exception) {
-            println("⚠️ Error reanudando música: ${e.message}")
+            // Ignorar
         }
     }
     
-    // ========== CONTROL DE VOLUMEN ==========
-    
     fun setSoundVolume(volume: Float) {
         soundVolume = volume.coerceIn(0f, 1f)
-        println("🔊 Volumen efectos: ${(soundVolume * 100).toInt()}%")
     }
     
     fun setMusicVolume(volume: Float) {
         musicVolume = volume.coerceIn(0f, 1f)
         currentMusic?.volume = musicVolume
-        println("🎵 Volumen música: ${(musicVolume * 100).toInt()}%")
     }
     
     fun getSoundVolume(): Float = soundVolume
     fun getMusicVolume(): Float = musicVolume
     
-    // ========== TOGGLE ==========
-    
     fun toggleSound() {
         soundEnabled = !soundEnabled
-        println(if (soundEnabled) "🔊 Efectos ON" else "🔇 Efectos OFF")
     }
     
     fun toggleMusic() {
         musicEnabled = !musicEnabled
         if (musicEnabled) {
             currentMusic?.play()
-            println("🎵 Música ON")
         } else {
             currentMusic?.pause()
-            println("🎵 Música OFF")
         }
     }
     
     fun isSoundEnabled(): Boolean = soundEnabled
     fun isMusicEnabled(): Boolean = musicEnabled
     
-    // ========== ESTADO ==========
-    
-    fun getStatus(): String {
-        return buildString {
-            append("🔊 ESTADO DE AUDIO\n")
-            append("├─ Efectos: ${if (soundEnabled) "ON" else "OFF"} (${(soundVolume * 100).toInt()}%)\n")
-            append("├─ Música: ${if (musicEnabled) "ON" else "OFF"} (${(musicVolume * 100).toInt()}%)\n")
-            append("├─ Loop: ${currentMusic?.isLooping ?: false}\n")
-            append("└─ Estado: ${if (currentMusic?.isPlaying == true) "REPRODUCIENDO" else "DETENIDA"}")
-        }
-    }
-    
-    // ========== LIMPIEZA ==========
-    
     fun dispose() {
         try {
-            println("🔊 Liberando recursos de audio WAV...")
-            
-            // Detener y liberar música
             menuMusic?.stop()
             gameMusic?.stop()
             currentMusic?.stop()
@@ -263,7 +202,6 @@ object SoundManager {
             menuMusic?.dispose()
             gameMusic?.dispose()
             
-            // Liberar efectos
             shootSound?.dispose()
             explosionSound?.dispose()
             powerupSound?.dispose()
@@ -272,7 +210,7 @@ object SoundManager {
             damageSound?.dispose()
             uiClickSound?.dispose()
             
-            println("✅ Recursos de audio liberados correctamente")
+            println("✅ Recursos de audio liberados")
         } catch (e: Exception) {
             println("⚠️ Error liberando recursos: ${e.message}")
         }

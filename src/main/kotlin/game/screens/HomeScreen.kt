@@ -20,6 +20,7 @@ class HomeScreen(camera: OrthographicCamera, batch: SpriteBatch) : BaseScreen(ca
         println("🏠 Home Screen mostrada")
         selectedOption = 0
         optionSelected = null
+        SoundManager.playMenuMusic()  // ← AGREGAR ESTA LÍNEA
     }
     
     override fun handleInput() {

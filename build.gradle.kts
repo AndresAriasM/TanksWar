@@ -46,5 +46,21 @@ sourceSets {
     main {
         kotlin.srcDir("src/main/kotlin")
         resources.srcDir("src/resources")
+        resources.srcDir("src/main/kotlin")
     }
+}
+
+tasks.register<Copy>("copyAssets") {
+    from("src/resources/assets")
+    into("${layout.buildDirectory.get()}/resources/main/assets")
+}
+
+// Hacer que processResources dependa de copyAssets
+tasks.named("processResources") {
+    dependsOn("copyAssets")
+}
+
+// Hacer que jar dependa de processResources (que ya depende de copyAssets)
+tasks.named("jar") {
+    dependsOn("processResources")
 }
