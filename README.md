@@ -2,6 +2,11 @@
 
 Un juego de tanques 2D desarrollado en Kotlin usando LibGDX.
 
+##Diagramas
+
+- Diagrama Manual: https://www.canva.com/design/DAG4aon0wj0/zYI2VANI9ohVAAfu-G9jAQ/edit?utm_content=DAG4aon0wj0&utm_campaign=designshare&utm_medium=link2&utm_source=sharebutton
+- Diagrama Digital (Figma): https://www.figma.com/design/wb62apMlQeEXFpaoT6HXhw/Tank-Wars?node-id=0-1&t=Rqn9BDnz3md6d3vj-1
+
 ## Estructura del Proyecto
 
 - `src/main/kotlin/game/` - Código fuente principal
