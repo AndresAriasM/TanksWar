@@ -45,6 +45,10 @@ class GameScreen(camera: OrthographicCamera, batch: SpriteBatch) : BaseScreen(ca
     private var airplaneSpawnTimer = 0f
     private val airplaneSpawnInterval = 20f
     
+    // Pause menu
+    private var pausedMenuSelection = 0
+    private val pausedMenuOptions = listOf("Continuar", "Menú Principal")
+    
     data class DamageIndicator(
         var x: Float,
         var y: Float,
@@ -67,12 +71,12 @@ class GameScreen(camera: OrthographicCamera, batch: SpriteBatch) : BaseScreen(ca
         levelComplete = false
         allySpawned = false
         powerUpSpawnTimer = 0f
+        pausedMenuSelection = 0
         
         val levelConfig = LevelManager.levelConfigs[currentLevel]
         requireNotNull(levelConfig) { "Nivel $currentLevel no encontrado" }
         
         mapManager = MapManager()
-        // No cargar mapa fijo, solo generar obstáculos aleatorios
         mapManager.loadMap(arrayOf())  // Mapa vacío
         
         // Generar obstáculos aleatorios (más en niveles altos)
@@ -84,7 +88,7 @@ class GameScreen(camera: OrthographicCamera, batch: SpriteBatch) : BaseScreen(ca
             y = Constants.SCREEN_HEIGHT / 2
         )
         
-        enemyManager = EnemyManager(maxEnemies = 8)
+        enemyManager = EnemyManager(maxEnemies = 12)
         // Aumentar frecuencia de disparo según el nivel
         enemyManager.setShootFrequency(0.02f + (currentLevel * 0.01f))
         enemyManager.initialize(levelConfig.enemyCount)
@@ -126,16 +130,53 @@ class GameScreen(camera: OrthographicCamera, batch: SpriteBatch) : BaseScreen(ca
     
     override fun handleInput() {
         if (Gdx.input.isKeyJustPressed(Input.Keys.ESCAPE)) {
-            backToMenu = true
+            if (gameState == GameState.PAUSED) {
+                gameState = GameState.PLAYING
+                pausedMenuSelection = 0
+            } else {
+                gameState = GameState.PAUSED
+                pausedMenuSelection = 0
+            }
         }
         if (Gdx.input.isKeyJustPressed(Input.Keys.P)) {
-            gameState = if (gameState == GameState.PLAYING) GameState.PAUSED else GameState.PLAYING
+            if (gameState == GameState.PAUSED) {
+                gameState = GameState.PLAYING
+                pausedMenuSelection = 0
+            } else {
+                gameState = GameState.PAUSED
+                pausedMenuSelection = 0
+            }
         }
         if (Gdx.input.isKeyJustPressed(Input.Keys.SPACE)) {
             val bullet = playerTank.shoot()
             bullet?.let {
                 bullets.add(it)
                 SoundManager.playSound(SoundManager.SoundType.SHOOT)
+            }
+        }
+        
+        // Controles del menú de pausa
+        if (gameState == GameState.PAUSED) {
+            if (Gdx.input.isKeyJustPressed(Input.Keys.UP) || Gdx.input.isKeyJustPressed(Input.Keys.W)) {
+                pausedMenuSelection = (pausedMenuSelection - 1).coerceAtLeast(0)
+                SoundManager.playSound(SoundManager.SoundType.UI_CLICK)
+            }
+            if (Gdx.input.isKeyJustPressed(Input.Keys.DOWN) || Gdx.input.isKeyJustPressed(Input.Keys.S)) {
+                pausedMenuSelection = (pausedMenuSelection + 1).coerceAtMost(pausedMenuOptions.size - 1)
+                SoundManager.playSound(SoundManager.SoundType.UI_CLICK)
+            }
+            if (Gdx.input.isKeyJustPressed(Input.Keys.ENTER) || Gdx.input.isKeyJustPressed(Input.Keys.SPACE)) {
+                when (pausedMenuSelection) {
+                    0 -> {
+                        gameState = GameState.PLAYING
+                        pausedMenuSelection = 0
+                        SoundManager.playSound(SoundManager.SoundType.UI_CLICK)
+                    }
+                    1 -> {
+                        backToMenu = true
+                        SoundManager.playSound(SoundManager.SoundType.UI_CLICK)
+                    }
+                }
             }
         }
     }
@@ -198,12 +239,10 @@ class GameScreen(camera: OrthographicCamera, batch: SpriteBatch) : BaseScreen(ca
                 plane.resetShootTimer()
                 when (plane.type) {
                     AirplaneType.BOMBER -> {
-                        // Lanza bala hacia abajo
                         val (dropX, dropY) = plane.getDropPosition()
                         bullets.add(Bullet(dropX, dropY, 270f, 20, false))
                     }
                     AirplaneType.OBSTACLE_DROP -> {
-                        // Lanza obstáculo
                         val (dropX, dropY) = plane.getDropPosition()
                         mapManager.getObstacles().let { obstacles ->
                             if (obstacles.size < 30) {
@@ -233,11 +272,9 @@ class GameScreen(camera: OrthographicCamera, batch: SpriteBatch) : BaseScreen(ca
         powerUps.forEach { it.update(deltaTime) }
         powerUps.removeAll { !it.isActive }
         
-        // Actualizar indicadores de daño
         damageIndicators.forEach { it.time -= deltaTime }
         damageIndicators.removeAll { it.time <= 0 }
         
-        // Actualizar mensaje de vidas perdidas
         if (livesLostTimer > 0) {
             livesLostTimer -= deltaTime
         }
@@ -323,7 +360,6 @@ class GameScreen(camera: OrthographicCamera, batch: SpriteBatch) : BaseScreen(ca
                     hit = true
                 }
                 
-                // Balas enemigas dañan a los aliados
                 for (ally in allyTanks) {
                     if (ally.isAlive &&
                         CollisionSystem.checkCircleCollision(
@@ -390,7 +426,6 @@ class GameScreen(camera: OrthographicCamera, batch: SpriteBatch) : BaseScreen(ca
     }
     
     private fun checkTankCollisions() {
-        // Colisiones entre tanques enemigos y jugador
         for (enemy in enemyManager.getEnemies()) {
             if (enemy.isAlive && playerTank.isAlive) {
                 val dx = playerTank.x - enemy.x
@@ -414,7 +449,6 @@ class GameScreen(camera: OrthographicCamera, batch: SpriteBatch) : BaseScreen(ca
             PowerUpType.HEALTH -> playerTank.heal(30)
             PowerUpType.ARMOR -> playerTank.damageMultiplier = 1.5f
             PowerUpType.BLAST -> {
-                // Disparo en 5 direcciones
                 val angles = listOf(0f, 72f, 144f, 216f, 288f)
                 angles.forEach { angle ->
                     val radians = Math.toRadians(angle.toDouble())
@@ -426,13 +460,11 @@ class GameScreen(camera: OrthographicCamera, batch: SpriteBatch) : BaseScreen(ca
                 SoundManager.playSound(SoundManager.SoundType.SHOOT)
             }
             PowerUpType.ALLY_SPAWN -> {
-                // Agregar nuevo aliado con poca vida
                 allyTanks.add(AllyTank(
                     x = playerTank.x + 50f,
                     y = playerTank.y + 50f
                 ))
                 allyTanks.last().health = 30
-                println("🛡️ ¡Nuevo aliado spawneado! Total: ${allyTanks.size}")
                 println("🛡️ ¡Nuevo aliado ha sido invocado!")
             }
         }
@@ -457,7 +489,6 @@ class GameScreen(camera: OrthographicCamera, batch: SpriteBatch) : BaseScreen(ca
             playerTank.render(batch, shapeRenderer)
         }
         
-        // Renderizar aliados
         for (ally in allyTanks) {
             if (ally.isAlive) {
                 ally.render(batch, shapeRenderer)
@@ -470,10 +501,8 @@ class GameScreen(camera: OrthographicCamera, batch: SpriteBatch) : BaseScreen(ca
             }
         }
         
-        // Dibujar barras de vida después de todos los tanques
         shapeRenderer.begin(ShapeRenderer.ShapeType.Filled)
         
-        // Barra de vida del jugador
         if (playerTank.isAlive) {
             val barWidth = 40f
             val barHeight = 4f
@@ -486,7 +515,6 @@ class GameScreen(camera: OrthographicCamera, batch: SpriteBatch) : BaseScreen(ca
             shapeRenderer.rect(barX, barY, (barWidth * playerTank.health) / playerTank.maxHealth, barHeight)
         }
         
-        // Barras de aliados
         for (ally in allyTanks) {
             if (ally.isAlive) {
                 val barWidth = 40f
@@ -501,7 +529,6 @@ class GameScreen(camera: OrthographicCamera, batch: SpriteBatch) : BaseScreen(ca
             }
         }
         
-        // Barras de enemigos
         for (enemy in enemyManager.getEnemies()) {
             if (enemy.isAlive) {
                 val barWidth = 40f
@@ -522,12 +549,10 @@ class GameScreen(camera: OrthographicCamera, batch: SpriteBatch) : BaseScreen(ca
             bullet.render(batch, shapeRenderer)
         }
         
-        // Renderizar aviones
         airplanes.forEach { plane ->
             plane.render(shapeRenderer)
         }
         
-        // Dibujar indicadores de daño
         damageIndicators.forEach { indicator ->
             drawDamageIndicator(indicator)
         }
@@ -535,7 +560,7 @@ class GameScreen(camera: OrthographicCamera, batch: SpriteBatch) : BaseScreen(ca
         drawHUD()
         
         when (gameState) {
-            GameState.PAUSED -> drawPaused()
+            GameState.PAUSED -> drawPausedMenu()
             GameState.LEVEL_COMPLETE -> drawLevelComplete()
             GameState.GAME_OVER -> drawGameOver()
             else -> {}
@@ -557,7 +582,6 @@ class GameScreen(camera: OrthographicCamera, batch: SpriteBatch) : BaseScreen(ca
         
         font.draw(batch, "Enemigos: ${enemyManager.getAliveEnemiesCount()}", Constants.SCREEN_WIDTH / 2 - 100f, Constants.SCREEN_HEIGHT - 20f)
         
-        // Mostrar mensaje de vidas perdidas
         if (livesLostTimer > 0) {
             font.color.set(1f, 0f, 0f, livesLostTimer / 2f)
             font.data.setScale(2f)
@@ -572,18 +596,65 @@ class GameScreen(camera: OrthographicCamera, batch: SpriteBatch) : BaseScreen(ca
         batch.end()
     }
     
-    private fun drawPaused() {
+    private fun drawPausedMenu() {
+        // Fondo oscuro semi-transparente
+        shapeRenderer.begin(ShapeRenderer.ShapeType.Filled)
+        shapeRenderer.color.set(0f, 0f, 0f, 0.7f)
+        shapeRenderer.rect(0f, 0f, Constants.SCREEN_WIDTH, Constants.SCREEN_HEIGHT)
+        shapeRenderer.end()
+        
+        // Título
         drawCenteredText(
             "PAUSADO",
             Constants.SCREEN_WIDTH / 2,
-            Constants.SCREEN_HEIGHT / 2,
+            Constants.SCREEN_HEIGHT / 2 + 80f,
             3f
         )
+        
+        // Opciones del menú
+        val optionStartY = Constants.SCREEN_HEIGHT / 2
+        val optionSpacing = 60f
+        
+        pausedMenuOptions.forEachIndexed { index, option ->
+            val isSelected = index == pausedMenuSelection
+            val y = optionStartY - (index * optionSpacing)
+            
+            // Fondo de opción seleccionada
+            if (isSelected) {
+                shapeRenderer.begin(ShapeRenderer.ShapeType.Filled)
+                shapeRenderer.color.set(0.2f, 0.8f, 0.2f, 1f)
+                shapeRenderer.rect(
+                    Constants.SCREEN_WIDTH / 2 - 120f,
+                    y - 25f,
+                    240f,
+                    50f
+                )
+                shapeRenderer.end()
+            }
+            
+            // Texto de opción
+            val prefix = if (isSelected) "► " else "  "
+            batch.begin()
+            font.data.setScale(1.5f)
+            
+            if (isSelected) {
+                font.color.set(0f, 0f, 0f, 1f) // Negro para texto sobre fondo verde
+            } else {
+                font.color.set(1f, 1f, 1f, 1f) // Blanco
+            }
+            
+            val text = "$prefix$option"
+            val layout = com.badlogic.gdx.graphics.g2d.GlyphLayout(font, text)
+            font.draw(batch, text, Constants.SCREEN_WIDTH / 2 - layout.width / 2, y + layout.height / 2)
+            batch.end()
+        }
+        
+        // Controles
         drawCenteredText(
-            "Presiona P para continuar",
+            "Use ARRIBA/ABAJO para navegar, ENTER para seleccionar, ESC para continuar",
             Constants.SCREEN_WIDTH / 2,
-            Constants.SCREEN_HEIGHT / 2 - 50f,
-            1f
+            Constants.SCREEN_HEIGHT / 2 - 120f,
+            0.9f
         )
     }
     
@@ -640,24 +711,6 @@ class GameScreen(camera: OrthographicCamera, batch: SpriteBatch) : BaseScreen(ca
         
         DataManager.setTotalScore(score)
         DataManager.setHighScore(score)
-    }
-    
-    private fun drawHealthBar(x: Float, y: Float, health: Int, maxHealth: Int, width: Float, height: Float) {
-        shapeRenderer.begin(ShapeRenderer.ShapeType.Filled)
-        
-        // Fondo rojo
-        shapeRenderer.color.set(1f, 0f, 0f, 1f)
-        shapeRenderer.rect(x - width / 2, y, width, height)
-        
-        // Barra de salud verde
-        shapeRenderer.color.set(0f, 1f, 0f, 1f)
-        shapeRenderer.rect(x - width / 2, y, (width * health) / maxHealth, height)
-        
-        // Borde
-        shapeRenderer.color.set(1f, 1f, 1f, 0.8f)
-        shapeRenderer.rect(x - width / 2 - 1, y - 1, width + 2, height + 2)
-        
-        shapeRenderer.end()
     }
     
     private fun drawDamageIndicator(indicator: DamageIndicator) {

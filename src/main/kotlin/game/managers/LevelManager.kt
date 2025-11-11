@@ -22,11 +22,11 @@ object LevelManager {
     }
     
     private fun initializeLevels() {
-        // Level 1: Introducción - Pocos enemigos, poco desafío
+        // Level 1: Introducción - 5 enemigos
         levelConfigs[1] = LevelConfig(
             levelNumber = 1,
-            name = "Inicio Fácil",
-            enemyCount = 3,
+            name = "Inicio Desafiante",
+            enemyCount = 5,
             mapLayout = generateMapLevel1(),
             powerUpLocations = listOf(
                 Pair(400f, 300f),
@@ -36,11 +36,11 @@ object LevelManager {
             timeLimit = 120f
         )
         
-        // Level 2: Intermedio
+        // Level 2: Intermedio - 10 enemigos (+5)
         levelConfigs[2] = LevelConfig(
             levelNumber = 2,
-            name = "Nivel Intermedio",
-            enemyCount = 5,
+            name = "Desafío Progresivo",
+            enemyCount = 10,
             mapLayout = generateMapLevel2(),
             powerUpLocations = listOf(
                 Pair(400f, 450f),
@@ -51,11 +51,11 @@ object LevelManager {
             timeLimit = 150f
         )
         
-        // Level 3: Desafío moderado
+        // Level 3: Desafío moderado - 12 enemigos (+5)
         levelConfigs[3] = LevelConfig(
             levelNumber = 3,
-            name = "Desafío Moderado",
-            enemyCount = 7,
+            name = "Moderadamente Épico",
+            enemyCount = 12,
             mapLayout = generateMapLevel3(),
             powerUpLocations = listOf(
                 Pair(400f, 500f),
@@ -72,11 +72,11 @@ object LevelManager {
             timeLimit = 180f
         )
         
-        // Level 4: Difícil
+        // Level 4: Difícil - 15 enemigos (+5)
         levelConfigs[4] = LevelConfig(
             levelNumber = 4,
-            name = "Muy Difícil",
-            enemyCount = 10,
+            name = "Muy Difícil - Caos",
+            enemyCount = 15,
             mapLayout = generateMapLevel4(),
             powerUpLocations = listOf(
                 Pair(400f, 300f),
@@ -87,11 +87,11 @@ object LevelManager {
             timeLimit = 200f
         )
         
-        // Level 5: Épico
+        // Level 5: Épico - 20 enemigos (+5)
         levelConfigs[5] = LevelConfig(
             levelNumber = 5,
-            name = "Épico",
-            enemyCount = 15,
+            name = "Épico Total - Infierno",
+            enemyCount = 20,
             mapLayout = generateMapLevel5(),
             powerUpLocations = listOf(
                 Pair(400f, 300f),
@@ -110,11 +110,11 @@ object LevelManager {
             timeLimit = 240f
         )
         
-        // Level Secreto
+        // Level Secreto - 25 enemigos (+5)
         levelConfigs[6] = LevelConfig(
             levelNumber = 6,
-            name = "Nivel Secreto: Chaos",
-            enemyCount = 20,
+            name = "Nivel Secreto: Apocalipsis",
+            enemyCount = 25,
             mapLayout = generateSecretLevel(),
             powerUpLocations = listOf(
                 Pair(400f, 300f),
@@ -134,6 +134,13 @@ object LevelManager {
         )
         
         println("📋 LevelManager inicializado con 6 niveles")
+        println("🎮 Dificultad extrema activada:")
+        println("  - Nivel 1: 5 enemigos")
+        println("  - Nivel 2: 10 enemigos")
+        println("  - Nivel 3: 12 enemigos")
+        println("  - Nivel 4: 15 enemigos")
+        println("  - Nivel 5: 20 enemigos")
+        println("  - Secreto: 25 enemigos")
     }
     
     fun getCurrentLevelConfig(): LevelConfig? = levelConfigs[currentLevel]
