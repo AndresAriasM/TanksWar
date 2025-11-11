@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">TanksWar</string>
+    <string name="title_activity_main">TanksWar</string>
+    <string name="package_name">com.upb.tankswar</string>
+    <string name="custom_url_scheme">com.upb.tankswar</string>
+</resources>

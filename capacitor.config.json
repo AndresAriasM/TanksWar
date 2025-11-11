@@ -1,0 +1,6 @@
+{
+  "appId": "com.upb.tankswar",
+  "appName": "TanksWar",
+  "webDir": "www",
+  "bundledWebRuntime": false
+}
