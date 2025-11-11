@@ -40,6 +40,7 @@ enum class GameState {
 enum class ScreenType {
     SPLASH,
     HOME,
+    LEVEL_SELECT,
     GAME,
     SCORE,
     CREDITS

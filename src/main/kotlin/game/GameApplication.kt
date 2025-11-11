@@ -19,6 +19,7 @@ class GameApplication : ApplicationAdapter() {
     // Pantallas
     private lateinit var splashScreen: SplashScreen
     private lateinit var homeScreen: HomeScreen
+    private lateinit var levelSelectScreen: LevelSelectScreen
     private lateinit var gameScreen: GameScreen
     private lateinit var scoreScreen: ScoreScreen
     private lateinit var creditsScreen: CreditsScreen
@@ -40,6 +41,7 @@ class GameApplication : ApplicationAdapter() {
         // Crear pantallas
         splashScreen = SplashScreen(camera, batch)
         homeScreen = HomeScreen(camera, batch)
+        levelSelectScreen = LevelSelectScreen(camera, batch)
         gameScreen = GameScreen(camera, batch)
         scoreScreen = ScoreScreen(camera, batch)
         creditsScreen = CreditsScreen(camera, batch)
@@ -93,7 +95,7 @@ class GameApplication : ApplicationAdapter() {
                 val selected = homeScreen.getSelectedOption()
                 when (selected) {
                     "Jugar" -> {
-                        switchScreen(ScreenType.GAME)
+                        switchScreen(ScreenType.LEVEL_SELECT)
                         homeScreen.resetSelection()
                     }
                     "Puntuaciones" -> {
@@ -107,6 +109,17 @@ class GameApplication : ApplicationAdapter() {
                     "Salir" -> {
                         Gdx.app.exit()
                     }
+                }
+            }
+            
+            ScreenType.LEVEL_SELECT -> {
+                if (levelSelectScreen.getLevelSelected() != null) {
+                    switchScreen(ScreenType.GAME)
+                    levelSelectScreen.reset()
+                }
+                if (levelSelectScreen.isBackPressed()) {
+                    switchScreen(ScreenType.HOME)
+                    levelSelectScreen.reset()
                 }
             }
             
@@ -141,6 +154,7 @@ class GameApplication : ApplicationAdapter() {
         currentScreen = when (screenType) {
             ScreenType.SPLASH -> splashScreen
             ScreenType.HOME -> homeScreen
+            ScreenType.LEVEL_SELECT -> levelSelectScreen
             ScreenType.GAME -> gameScreen
             ScreenType.SCORE -> scoreScreen
             ScreenType.CREDITS -> creditsScreen
@@ -158,6 +172,7 @@ class GameApplication : ApplicationAdapter() {
         batch.dispose()
         splashScreen.dispose()
         homeScreen.dispose()
+        levelSelectScreen.dispose()
         gameScreen.dispose()
         scoreScreen.dispose()
         creditsScreen.dispose()
